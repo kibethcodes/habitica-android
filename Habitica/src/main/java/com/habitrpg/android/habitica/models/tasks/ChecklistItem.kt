@@ -2,11 +2,13 @@ package com.habitrpg.android.habitica.models.tasks
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.habitrpg.android.habitica.compose.ui.component.TaskItem
 import com.habitrpg.android.habitica.models.BaseMainObject
 import io.realm.RealmModel
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
 import java.util.*
+import com.habitrpg.android.habitica.compose.ui.component.CheckListItem as ComposeChecklistItem
 
 open class ChecklistItem : RealmObject, BaseMainObject, Parcelable {
 
@@ -71,5 +73,15 @@ open class ChecklistItem : RealmObject, BaseMainObject, Parcelable {
 
     override fun hashCode(): Int {
         return id?.hashCode() ?: 0
+    }
+
+    fun toCheckListItem(): ComposeChecklistItem {
+        return ComposeChecklistItem(
+            id = id ?: "",
+            text = text ?: "",
+            completed = completed,
+            position = position
+
+        )
     }
 }

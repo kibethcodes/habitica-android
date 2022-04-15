@@ -1,5 +1,6 @@
 package com.habitrpg.android.habitica.ui.fragments
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -9,10 +10,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.widget.Toast
+import androidx.compose.material.Text
+import androidx.compose.ui.text.toUpperCase
 import androidx.core.net.toUri
+import androidx.preference.PreferenceManager
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.habitrpg.android.habitica.R
 import com.habitrpg.android.habitica.components.UserComponent
+import com.habitrpg.android.habitica.compose.ui.screen.AboutElement
+import com.habitrpg.android.habitica.compose.ui.screen.AboutElementType
+import com.habitrpg.android.habitica.compose.ui.screen.AboutScreen
+import com.habitrpg.android.habitica.compose.ui.screen.AboutState
+import com.habitrpg.android.habitica.compose.ui.theme.HabiticaPalette
+import com.habitrpg.android.habitica.compose.ui.theme.HabiticaTheme
 import com.habitrpg.android.habitica.databinding.FragmentAboutBinding
 import com.habitrpg.android.habitica.helpers.AppConfigManager
 import com.habitrpg.android.habitica.helpers.MainNavigationController
@@ -38,6 +48,8 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
     private val termsLink = "https://habitica.com/static/terms"
     private val androidSourceCodeLink = "https://github.com/HabitRPG/habitrpg-android/"
     private val twitterLink = "https://twitter.com/habitica"
+    private val wikiaLink = "http://habitica.wikia.com/"
+    private val habiticaHomeLink = "https://www.habitica.com"
 
     private var versionNumberTappedCount = 0
 
@@ -47,33 +59,41 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
         startActivity(intent)
     }
 
-    override fun createBinding(inflater: LayoutInflater, container: ViewGroup?): FragmentAboutBinding {
+    override fun createBinding(
+        inflater: LayoutInflater,
+        container: ViewGroup?
+    ): FragmentAboutBinding {
         return FragmentAboutBinding.inflate(layoutInflater, container, false)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         this.hidesToolbar = true
         return super.onCreateView(inflater, container, savedInstanceState)
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        binding?.versionInfo?.setOnClickListener {
-            versionNumberTappedCount += 1
-            when (versionNumberTappedCount) {
-                1 -> context?.let { context ->
-                    Toast.makeText(context, "Oh! You tapped me!", Toast.LENGTH_SHORT).show()
+    private fun versionClick() {
+        versionNumberTappedCount += 1
+        when (versionNumberTappedCount) {
+            1 -> context?.let { context ->
+                Toast.makeText(context, "Oh! You tapped me!", Toast.LENGTH_SHORT).show()
+            }
+            in 5..7 -> context?.let { context ->
+                Toast.makeText(
+                    context,
+                    "Only ${8 - versionNumberTappedCount} taps left!",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            8 -> {
+                context?.let { context ->
+                    Toast.makeText(context, "You were blessed with cats!", Toast.LENGTH_SHORT)
+                        .show()
                 }
-                in 5..7 -> context?.let { context ->
-                    Toast.makeText(context, "Only ${8 - versionNumberTappedCount} taps left!", Toast.LENGTH_SHORT).show()
-                }
-                8 -> {
-                    context?.let { context ->
-                        Toast.makeText(context, "You were blessed with cats!", Toast.LENGTH_SHORT).show()
-                    }
-                    doTheThing()
-                }
+                doTheThing()
             }
         }
     }
@@ -81,7 +101,8 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
     private val versionName: String by lazy {
         try {
             @Suppress("DEPRECATION")
-            activity?.packageManager?.getPackageInfo(activity?.packageName ?: "", 0)?.versionName ?: ""
+            activity?.packageManager?.getPackageInfo(activity?.packageName ?: "", 0)?.versionName
+                ?: ""
         } catch (e: PackageManager.NameNotFoundException) {
             ""
         }
@@ -90,7 +111,8 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
     private val versionCode: Int by lazy {
         try {
             @Suppress("DEPRECATION")
-            activity?.packageManager?.getPackageInfo(activity?.packageName ?: "", 0)?.versionCode ?: 0
+            activity?.packageManager?.getPackageInfo(activity?.packageName ?: "", 0)?.versionCode
+                ?: 0
         } catch (e: PackageManager.NameNotFoundException) {
             0
         }
@@ -99,23 +121,66 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding?.versionInfo?.text = getString(R.string.version_info, versionName, versionCode)
+//        if (appConfigManager.lastVersionCode() > versionCode) {
+//            binding?.updateAvailableWrapper?.visibility = View.VISIBLE
+//            binding?.updateAvailableTextview?.text = getString(
+//                R.string.update_available,
+//                appConfigManager.lastVersionNumber(),
+//                appConfigManager.lastVersionCode()
+//            )
+//        } else {
+//            binding?.updateAvailableWrapper?.visibility = View.GONE
+//        }
 
-        if (appConfigManager.lastVersionCode() > versionCode) {
-            binding?.updateAvailableWrapper?.visibility = View.VISIBLE
-            binding?.updateAvailableTextview?.text = getString(R.string.update_available, appConfigManager.lastVersionNumber(), appConfigManager.lastVersionCode())
-        } else {
-            binding?.updateAvailableWrapper?.visibility = View.GONE
+        val aboutState = AboutState(
+            elements = listOf(
+                AboutElement(
+                    label = getString(R.string.version_info, versionName, versionCode),
+                    elementType = AboutElementType.TEXT,
+                    onClick = { versionClick() }),
+                AboutElement(
+                    label = "@habitica",
+                    elementType = AboutElementType.LINK,
+                    onClick = { openBrowserLink(twitterLink) }),
+                AboutElement(
+                    label = "www.habitica.com",
+                    elementType = AboutElementType.LINK,
+                    onClick = { openBrowserLink(habiticaHomeLink) }),
+                AboutElement(
+                    label = "http://habitica.wikia.com/",
+                    elementType = AboutElementType.LINK,
+                    onClick = { openBrowserLink(wikiaLink) }),
+                AboutElement(
+                    label = getString(R.string.privacy_policy),
+                    elementType = AboutElementType.BUTTON,
+                    onClick = { openBrowserLink(privacyPolicyLink) }),
+                AboutElement(
+                    label = getString(R.string.terms_of_service),
+                    elementType = AboutElementType.BUTTON,
+                    onClick = { openBrowserLink(termsLink) }),
+                AboutElement(
+                    label = getString(R.string.about_rate_our_app),
+                    elementType = AboutElementType.BUTTON,
+                    onClick = { openGooglePlay() }),
+                AboutElement(
+                    label = getString(R.string.about_habitica_open_source),
+                    elementType = AboutElementType.TEXT,
+                    onClick = { openBrowserLink(androidSourceCodeLink) }),
+                AboutElement(
+                    label = getString(R.string.report_bug),
+                    elementType = AboutElementType.BUTTON,
+                    onClick = { MainNavigationController.navigate(R.id.bugFixFragment) }),
+                AboutElement(
+                    label = getString(R.string.about_source_code),
+                    elementType = AboutElementType.BUTTON,
+                    onClick = { openBrowserLink(androidSourceCodeLink) })
+            )
+        )
+        binding?.aboutCompose?.setContent {
+            HabiticaTheme(colorPalette = HabiticaPalette.valueOf(getThemeString(requireContext()))) {
+                AboutScreen(aboutState = aboutState)
+            }
         }
-
-        binding?.privacyPolicyButton?.setOnClickListener { openBrowserLink(privacyPolicyLink) }
-        binding?.termsButton?.setOnClickListener { openBrowserLink(termsLink) }
-        binding?.sourceCodeLink?.setOnClickListener { openBrowserLink(androidSourceCodeLink) }
-        binding?.twitter?.setOnClickListener { openBrowserLink(twitterLink) }
-        binding?.sourceCodeButton?.setOnClickListener { openBrowserLink(androidSourceCodeLink) }
-        binding?.reportBug?.setOnClickListener { MainNavigationController.navigate(R.id.bugFixFragment) }
-        binding?.googlePlayStoreButton?.setOnClickListener { openGooglePlay() }
-        binding?.updateAvailableWrapper?.setOnClickListener { openGooglePlay() }
     }
 
     private fun openBrowserLink(url: String) {
@@ -166,4 +231,9 @@ class AboutFragment : BaseMainFragment<FragmentAboutBinding>() {
     }
 
     override var binding: FragmentAboutBinding? = null
+
+    fun getThemeString(context: Context): String {
+        val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+        return preferences.getString("theme_name", "purple")?.uppercase() ?: "PURPLE"
+    }
 }

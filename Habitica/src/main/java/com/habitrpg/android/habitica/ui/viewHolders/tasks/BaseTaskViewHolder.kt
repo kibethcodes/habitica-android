@@ -26,11 +26,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-abstract class BaseTaskViewHolder constructor(itemView: View, var scoreTaskFunc: ((Task, TaskDirection) -> Unit), var openTaskFunc: ((Task) -> Unit), var brokenTaskFunc: ((Task) -> Unit)) : BindableViewHolder<Task>(itemView), View.OnTouchListener {
+abstract class BaseTaskViewHolder constructor(itemView: View, var scoreTaskFunc: ((Task, TaskDirection) -> Unit), var openTaskFunc: ((Task) -> Unit), var brokenTaskFunc: ((Task) -> Unit)) : InterimViewHolder(itemView), View.OnTouchListener{
     var task: Task? = null
     var movingFromPosition: Int? = null
-    var errorButtonClicked: Action? = null
-    var isLocked = false
+    override var errorButtonClicked: Action? = null
+    override var isLocked = false
     protected var context: Context
     private val mainTaskWrapper: ViewGroup = itemView.findViewById(R.id.main_task_wrapper)
     protected val titleTextView: EllipsisTextView = itemView.findViewById(R.id.checkedTextView)

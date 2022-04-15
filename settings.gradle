@@ -1,2 +1,3 @@
 include ':shared'
 include 'Habitica', ':Habitica'
+include ':compose'

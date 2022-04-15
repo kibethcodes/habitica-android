@@ -5,6 +5,7 @@ import android.os.Parcelable
 import android.text.Spanned
 import com.google.gson.annotations.SerializedName
 import com.habitrpg.android.habitica.R
+import com.habitrpg.android.habitica.compose.ui.component.TaskItem
 import com.habitrpg.android.habitica.helpers.RxErrorHandler
 import com.habitrpg.android.habitica.models.BaseMainObject
 import com.habitrpg.android.habitica.models.Tag
@@ -408,5 +409,17 @@ open class Task : RealmObject, BaseMainObject, Parcelable {
 
             override fun newArray(size: Int): Array<Task?> = arrayOfNulls(size)
         }
+    }
+
+    fun toTaskItem(): TaskItem {
+        val cl = checklist?.let {
+            it.map { it.toCheckListItem() }
+        } ?: emptyList()
+        return TaskItem(
+            title = text,
+            notes = notes ?: "",
+            checkList = cl,
+            value = value
+        )
     }
 }
